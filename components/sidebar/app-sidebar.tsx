@@ -28,6 +28,7 @@ import {
 
 import { GiBrazil } from "react-icons/gi";
 import { FaUsers } from "react-icons/fa";
+import { Button } from "../ui/button"
 
 const data = {
   user: {
@@ -54,28 +55,24 @@ const data = {
   ],
   navMain: [
     {
-      title: "Certidões",
-      url: "#",
+      title: "Gerenciamento",
+      url: "/",
       icon: GiBrazil,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Certidões",
+          url: "/",
         },
         {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
+          title: "Estados",
+          url: "/states",
+        }
       ],
     },
     {
       title: "Usuários",
-      url: "#",
+      url: "/users",
       icon: FaUsers,
       items: [
         {
@@ -113,14 +110,15 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar  collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+      <NavMain items={data.navMain} />
+
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
