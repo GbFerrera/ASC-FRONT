@@ -3,7 +3,6 @@ import { useState,useEffect } from "react";
 import { Title } from "@/components/title"
 import { SheetComponent } from "@/components/sheet";
 import { SelectComponent } from "@/components/selectComponent";
-import { InputWithLabel } from "@/components/inputWithLabel";
 import { api } from "@/services/api";
 
 const estados = {
