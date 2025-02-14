@@ -24,6 +24,7 @@ import {
 
 import { GiBrazil } from "react-icons/gi";
 import { FaUsers } from "react-icons/fa";
+import { MdAccountBalance, MdPerson } from "react-icons/md";
 import { Button } from "../ui/button"
 
 const data = {
@@ -63,6 +64,32 @@ const data = {
         {
           title: "Estados",
           url: "/states",
+        }
+      ],
+    },
+    {
+      title: "Clientes",
+      url: "/customers",
+      icon: MdPerson,
+      items: [
+        {
+          title: "Lista de Clientes",
+          url: "/customers",
+        }
+      ],
+    },
+    {
+      title: "Bancos",
+      url: "/banks",
+      icon: MdAccountBalance,
+      items: [
+        {
+          title: "Lista de Bancos",
+          url: "/banks",
+        },
+        {
+          title: "Adicionar Banco",
+          url: "/banks/new",
         }
       ],
     },

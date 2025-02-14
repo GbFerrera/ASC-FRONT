@@ -4,6 +4,8 @@ import { Title } from "@/components/title"
 import { SheetComponent } from "@/components/sheet";
 import { SelectComponent } from "@/components/selectComponent";
 import { api } from "@/services/api";
+import { Trash } from "lucide-react";
+import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
 
 const estados = {
   AC: "Acre",
@@ -42,9 +44,46 @@ export default function States() {
   
     const cadastrados = new Set(states.map((state) => state.abbreviation));
 
-function isStateRegistered(abbreviation: string) {
-  return cadastrados.has(abbreviation);
-}
+    async function deleteState(id: number) {
+      try {
+        const response = await api.delete(`/states/${id}`);
+        
+        if (response.status === 200) {
+          // Remove o estado da lista local
+          setStates(prevStates => prevStates.filter(state => state.id !== id));
+          
+          // Atualiza a lista de estados disponíveis
+          const deletedState = states.find(state => state.id === id);
+          if (deletedState) {
+            setAvailableStates(prev => [
+              ...prev,
+              { value: deletedState.abbreviation, label: estados[deletedState.abbreviation as keyof typeof estados] }
+            ].sort((a, b) => a.label.localeCompare(b.label)));
+          }
+        }
+      } catch (error: any) {
+        console.error("Erro ao deletar estado:", error);
+        const errorMessage = error.response?.data?.message || "Erro ao deletar estado. Por favor, tente novamente.";
+        alert(errorMessage);
+      }
+    }
+
+    async function handleAddState() {
+      if (!selectedState) return;
+  
+      const newState = {
+        abbreviation: selectedState,
+        name: estados[selectedState as keyof typeof estados],
+      };
+  
+      try {
+        const response = await api.post("/states", newState);
+        setStates((prev) => [...prev, response.data]); // Usa o ID retornado pela API
+        setSelectedState(null); // Resetar seleção
+      } catch (error) {
+        console.error("Erro ao adicionar estado:", error);
+      }
+    }
 
     useEffect(() => {
       async function fetchStates() {
@@ -71,24 +110,11 @@ function isStateRegistered(abbreviation: string) {
   
       setAvailableStates(disponiveis);
     }, [states]);
-  
-    async function handleAddState() {
-      if (!selectedState) return;
-  
-      const newState = {
-        abbreviation: selectedState,
-        name: estados[selectedState as keyof typeof estados],
-      };
-  
-      try {
-        await api.post("/states", newState);
-        setStates((prev) => [...prev, { id: Date.now(), ...newState }]); // Simula adição local
-        setSelectedState(null); // Resetar seleção
-      } catch (error) {
-        console.error("Erro ao adicionar estado:", error);
-      }
+
+    function isStateRegistered(abbreviation: string) {
+      return cadastrados.has(abbreviation);
     }
-  
+
    return (
     <div>
 
@@ -106,23 +132,24 @@ function isStateRegistered(abbreviation: string) {
   preserveAspectRatio="xMidYMid meet"
   className="w-full max-w-[400px] sm:max-w-[500px] md:max-w-[600px]"
 >
+        {/* Mapa base - todos os estados */}
         {/* bahia */}
         <path
           d="m 396.7483,280.14568 c 0.71501,-2.34867 2.32435,-8.20598 2.77544,-10.88304 1.06631,-4.36755 3.22976,-8.56454 2.89307,-13.15018 0.24433,-9.74093 0.23297,-19.53715 1.88542,-29.15165 -1.15228,-2.73068 4.27262,-3.15317 1.98097,-5.4068 -1.73917,-0.58345 0.40641,-3.0821 1.62874,-3.43559 1.53619,-0.44426 2.9396,0.42062 4.0554,2.55291 1.73062,0.80718 2.10721,-1.34658 3.44153,-2.3963 1.76038,-3.59872 4.5629,-7.82465 6.35375,-9.78217 -2.85539,-2.53678 -4.39697,-3.48364 -5.47699,-5.95478 -1.15551,-2.64388 -2.51321,-6.38726 -0.69554,-8.62811 0.8232,-1.01486 3.09325,0.53899 3.88851,-0.49791 1.1238,-1.46527 -0.15589,-3.75867 -0.74511,-5.48947 -1.13553,-3.33554 -2.18056,-8.25892 -3.93647,-11.01495 -1.1871,-1.86324 -2.8669,-3.41295 -4.68577,-4.65245 -1.85469,-1.26391 -3.96204,-2.60677 -6.16293,-2.71187 -2.38216,-0.11376 -4.32187,2.50569 -6.51221,3.70588 -2.22637,1.21993 -3.59855,3.30495 -6.73716,3.55179 -2.5361,0.19943 -4.2372,-1.37704 -4.99484,-3.97769 -1.27754,-2.23433 -2.44172,-3.74646 -4.4687,-3.83434 -1.22531,-0.0531 -2.13234,1.21325 -3.13497,1.91584 -1.84821,1.29512 -3.35747,3.05441 -5.28854,4.22383 -2.25784,1.3673 -4.62557,2.88087 -7.24986,3.19641 -4.15038,0.49906 -7.72576,-3.98224 -11.99836,-2.01778 -1.36462,0.62742 -0.32681,2.83249 -0.58534,4.30555 -0.33094,1.88625 -0.65365,3.87203 -1.6678,5.49956 -1.355,2.17451 -3.19835,4.27941 -5.45026,5.51555 -2.29861,1.26176 -5.1901,2.01727 -7.79672,1.71113 -2.61965,-0.30767 -5.09356,-1.52312 -7.08001,-3.18076 -1.74634,-1.45727 -2.82984,-5.60291 -3.86531,-5.62313 -1.87079,-0.0365 -3.74146,7.10626 -5.89576,11.98985 -0.63247,1.43375 3.11949,4.1232 3.31557,6.66498 0.12788,1.65771 -1.66882,3.00996 -1.75071,4.67058 -0.10329,2.09443 1.48709,2.87468 1.61775,6.07936 0.0931,2.28225 -0.95868,4.37663 -1.04047,6.60343 -0.12668,3.44858 0.0489,6.69098 0.85673,10.31719 0.72509,3.2546 3.17304,5.19269 -0.24445,10.0002 5.13924,1.05891 11.15958,-5.0548 16.30713,-7.39931 2.60854,-0.70728 4.8401,-1.06363 6.82943,0.0373 1.54993,0.85775 1.35847,3.49706 2.83011,4.48183 2.27406,1.5217 5.47244,0.63594 8.09762,1.41941 5.655,1.68766 6.77439,7.11151 16.25437,6.99917 2.75517,-0.0327 3.16261,4.36921 5.5539,5.73076 3.11222,2.36598 11.11558,0.63149 12.80505,4.85243 2.29565,5.73537 -7.71302,12.19482 -7.12466,15.98706 0.43899,2.82945 3.71881,5.52173 6.1833,7.75474 0.97504,0.88346 2.13673,2.26039 3.46556,2.05997 0.51461,-0.0776 0.78079,-0.71097 1.04711,-1.15809 0.26778,-0.44957 0.52248,-1.48034 0.52248,-1.48034 z"
           fill="gray"
           stroke={isStateRegistered("BA") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.BA)}
+          onClick={() => setSelectedState("BA")}
           className="hover:fill-blue-500 cursor-pointer"
         />
-
+        {/* Todos os outros estados com o mesmo padrão */}
         {/* sergipe */}
         <path
           d="m 426.78167,203.57812 c 1.64447,-3.64352 3.42828,-4.24703 5.65355,-5.03924 0.7999,-0.47026 1.75861,-1.31119 2.62132,-2.07247 1.41405,-0.97145 2.25072,-1.02012 3.68672,-1.58986 -4.04896,-2.86239 -7.79503,-5.819 -11.61154,-8.83301 -1.44855,-1.14396 -2.89164,-2.2969 -4.28272,-3.51008 -1.8488,-1.61237 -4.21709,-3.83037 -5.39571,-5.00464 -0.68913,0.29035 0.62068,3.13542 1.40885,5.58396 0.91366,2.83838 1.4495,3.92905 2.02235,5.94236 0.72816,2.55913 0.69119,4.41636 0.47121,5.49087 -0.14526,0.70943 -0.74247,1.41382 -1.42358,1.66008 -1.08126,0.39093 -2.12116,-1.61768 -3.33247,-0.28322 -0.98648,1.08677 -0.0189,3.2511 0.65831,4.66967 1.22373,2.5632 2.30258,5.60329 5.81317,6.23013 0.68452,0.11035 1.33713,-0.37081 2.00568,-0.5562 0.74465,-0.75158 1.28679,-1.71089 1.70483,-2.68835 z"
           fill="gray"
           stroke={isStateRegistered("SE") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.SE)}
+          onClick={() => setSelectedState("SE")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -132,7 +159,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("PE") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.PE)}
+          onClick={() => setSelectedState("PE")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -143,7 +170,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("AL") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.AL)}
+          onClick={() => setSelectedState("AL")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -153,7 +180,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("AM") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.AM)}
+          onClick={() => setSelectedState("AM")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -164,7 +191,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("PA") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.PA)}
+          onClick={() => setSelectedState("PA")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -174,7 +201,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("MT") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.MT)}
+          onClick={() => setSelectedState("MT")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -185,7 +212,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("RO") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.RO)}
+          onClick={() => setSelectedState("RO")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -197,7 +224,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("AC") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.AC)}
+          onClick={() => setSelectedState("AC")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -207,7 +234,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("AP") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.AP)}
+          onClick={() => setSelectedState("AP")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -218,7 +245,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("RJ") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.RJ)}
+          onClick={() => setSelectedState("RJ")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -228,7 +255,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("RS") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.RS)}
+          onClick={() => setSelectedState("RS")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -239,7 +266,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("SC") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.SC)}
+          onClick={() => setSelectedState("SC")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -249,7 +276,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("PR") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.PR)}
+          onClick={() => setSelectedState("PR")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -260,7 +287,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("SP") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.SP)}
+          onClick={() => setSelectedState("SP")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -271,7 +298,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("MS") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.MS)}
+          onClick={() => setSelectedState("MS")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -280,9 +307,9 @@ function isStateRegistered(abbreviation: string) {
         <path
           d="m 269.0819,289.24096 c 5.738,-7.05714 7.80891,-4.46138 12.76452,-5.70805 2.18459,-0.57774 5.99743,-2.6334 8.22458,-3.01548 4.18366,-0.71773 7.39291,2.48104 11.49956,1.407 1.73553,-0.4539 3.35988,-1.45036 4.40308,-2.90976 0.90273,-1.26289 1.33782,-3.10464 1.30043,-4.65655 -0.0386,-1.60161 -1.31311,-2.75932 -1.25493,-4.36034 0.0861,-2.36835 3.10304,-4.18823 2.79367,-6.53786 -1.09775,-8.33734 -3.45726,-8.18185 -15.25453,-8.94765 0.18357,-2.79161 0.25221,-5.59013 0.42869,-8.38082 15.89865,-0.75036 9.37733,0.22081 14.57686,7.23397 1.25761,-0.58813 2.51522,-1.17626 3.77283,-1.76438 2.14339,-2.23638 -0.72409,-6.80589 1.28044,-9.1393 2.83573,-3.30098 4.87603,-1.29564 7.09782,-2.44756 1.21484,-0.62985 2.8101,-1.13478 3.33025,-2.40047 0.5658,-1.37677 0.2299,-2.82343 -0.73963,-4.40381 -0.75589,-1.81131 -0.79154,-2.84363 -1.27192,-5.43394 -1.28044,-6.90435 0.66339,-7.95603 -0.92629,-8.38568 -2.70024,-0.72981 -4.63886,-1.52718 -8.68379,-1.83668 -3.65156,-0.2794 -5.35468,6.02489 -9.04636,6.82403 -3.88901,0.84186 -7.68001,-2.87624 -11.64978,-2.60401 -1.64011,0.11247 -3.14507,1.38518 -4.62119,1.7228 -1.86238,0.42597 -3.71811,0.67024 -5.46201,0.14489 -1.81995,-0.54826 -3.20804,-1.93629 -4.66817,-3.27469 -0.96307,-0.88278 0.52987,-5.50419 -2.60562,-3.0065 -2.95363,2.91716 -5.06396,10.70683 -5.78331,13.62768 -0.26339,1.67637 -0.48094,6.2902 -2.33541,8.61818 -1.28773,1.61654 -4.11209,1.36083 -5.47039,2.91855 -1.7448,2.00097 -2.01435,5.00184 -2.75748,7.47198 -2.11261,0.9894 -4.61742,2.48122 -6.54738,4.21754 -2.13712,1.92268 -4.00352,4.20958 -5.408,6.71785 -1.55109,2.77009 -2.83174,6.21781 -3.204,8.96927 -0.28786,2.12762 -0.082,4.40747 0.20395,6.3522 -1.10275,3.92974 0.54619,2.49978 3.43888,5.11745 0.0635,0.96046 -0.98628,2.36869 -0.004,2.60663 4.48248,1.57767 7.04463,2.59192 10.43254,4.05614 3.24829,1.58453 6.59023,3.36293 9.90671,4.80071 0.76107,-1.11556 1.32811,-2.32334 2.23938,-3.59334 z"
           fill="gray"
-          stroke="black"
+          stroke={isStateRegistered("GO") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.GO)}
+          onClick={() => setSelectedState("GO")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -293,7 +320,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("MG") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.MG)}
+          onClick={() => setSelectedState("MG")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -304,7 +331,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("ES") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.ES)}
+          onClick={() => setSelectedState("ES")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -315,7 +342,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("PI") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.PI)}
+          onClick={() => setSelectedState("PI")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -327,7 +354,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("CE") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.CE)}
+          onClick={() => setSelectedState("CE")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -339,7 +366,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke="black"
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.RR)}
+          onClick={() => setSelectedState("RR")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -350,7 +377,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke="black"
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.TO)}
+          onClick={() => setSelectedState("TO")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -361,7 +388,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("MA") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.MA)}
+          onClick={() => setSelectedState("MA")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -372,7 +399,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("RN") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.RN)}
+          onClick={() => setSelectedState("RN")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -383,7 +410,7 @@ function isStateRegistered(abbreviation: string) {
           fill="gray"
           stroke={isStateRegistered("PB") ? "black" : "red"}
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.PB)}
+          onClick={() => setSelectedState("PB")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -394,7 +421,7 @@ function isStateRegistered(abbreviation: string) {
           stroke={isStateRegistered("DF") ? "black" : "red"}
 
           strokeWidth="2"
-          onClick={() => setSelectedState(estados.DF)}
+          onClick={() => setSelectedState("DF")}
           className="hover:fill-blue-500 cursor-pointer"
         />
 
@@ -405,8 +432,84 @@ function isStateRegistered(abbreviation: string) {
 
         {/* Adicione os outros estados aqui com os paths reais */}
       </svg>
-
-
+      <circle cx="396" cy="280" r="5" fill={isStateRegistered("BA") ? "black" : "red"} className="cursor-pointer">
+          <title>Bahia (BA) - {isStateRegistered("BA") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="269" cy="289" r="5" fill={isStateRegistered("GO") ? "black" : "red"} className="cursor-pointer">
+          <title>Goiás (GO) - {isStateRegistered("GO") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="350" cy="200" r="5" fill={isStateRegistered("PI") ? "black" : "red"} className="cursor-pointer">
+          <title>Piauí (PI) - {isStateRegistered("PI") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="380" cy="220" r="5" fill={isStateRegistered("CE") ? "black" : "red"} className="cursor-pointer">
+          <title>Ceará (CE) - {isStateRegistered("CE") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="390" cy="240" r="5" fill={isStateRegistered("PE") ? "black" : "red"} className="cursor-pointer">
+          <title>Pernambuco (PE) - {isStateRegistered("PE") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="410" cy="230" r="5" fill={isStateRegistered("RN") ? "black" : "red"} className="cursor-pointer">
+          <title>Rio Grande do Norte (RN) - {isStateRegistered("RN") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="400" cy="235" r="5" fill={isStateRegistered("PB") ? "black" : "red"} className="cursor-pointer">
+          <title>Paraíba (PB) - {isStateRegistered("PB") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="385" cy="260" r="5" fill={isStateRegistered("AL") ? "black" : "red"} className="cursor-pointer">
+          <title>Alagoas (AL) - {isStateRegistered("AL") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="390" cy="250" r="5" fill={isStateRegistered("SE") ? "black" : "red"} className="cursor-pointer">
+          <title>Sergipe (SE) - {isStateRegistered("SE") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="320" cy="320" r="5" fill={isStateRegistered("MS") ? "black" : "red"} className="cursor-pointer">
+          <title>Mato Grosso do Sul (MS) - {isStateRegistered("MS") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="300" cy="300" r="5" fill={isStateRegistered("MT") ? "black" : "red"} className="cursor-pointer">
+          <title>Mato Grosso (MT) - {isStateRegistered("MT") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="250" cy="280" r="5" fill={isStateRegistered("RO") ? "black" : "red"} className="cursor-pointer">
+          <title>Rondônia (RO) - {isStateRegistered("RO") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="270" cy="200" r="5" fill={isStateRegistered("PA") ? "black" : "red"} className="cursor-pointer">
+          <title>Pará (PA) - {isStateRegistered("PA") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="280" cy="150" r="5" fill={isStateRegistered("AP") ? "black" : "red"} className="cursor-pointer">
+          <title>Amapá (AP) - {isStateRegistered("AP") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="220" cy="220" r="5" fill={isStateRegistered("AM") ? "black" : "red"} className="cursor-pointer">
+          <title>Amazonas (AM) - {isStateRegistered("AM") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="250" cy="150" r="5" fill={isStateRegistered("RR") ? "black" : "red"} className="cursor-pointer">
+          <title>Roraima (RR) - {isStateRegistered("RR") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="350" cy="280" r="5" fill={isStateRegistered("MG") ? "black" : "red"} className="cursor-pointer">
+          <title>Minas Gerais (MG) - {isStateRegistered("MG") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="380" cy="320" r="5" fill={isStateRegistered("ES") ? "black" : "red"} className="cursor-pointer">
+          <title>Espírito Santo (ES) - {isStateRegistered("ES") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="360" cy="340" r="5" fill={isStateRegistered("RJ") ? "black" : "red"} className="cursor-pointer">
+          <title>Rio de Janeiro (RJ) - {isStateRegistered("RJ") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="340" cy="350" r="5" fill={isStateRegistered("SP") ? "black" : "red"} className="cursor-pointer">
+          <title>São Paulo (SP) - {isStateRegistered("SP") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="320" cy="380" r="5" fill={isStateRegistered("PR") ? "black" : "red"} className="cursor-pointer">
+          <title>Paraná (PR) - {isStateRegistered("PR") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="300" cy="400" r="5" fill={isStateRegistered("SC") ? "black" : "red"} className="cursor-pointer">
+          <title>Santa Catarina (SC) - {isStateRegistered("SC") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="280" cy="420" r="5" fill={isStateRegistered("RS") ? "black" : "red"} className="cursor-pointer">
+          <title>Rio Grande do Sul (RS) - {isStateRegistered("RS") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="350" cy="240" r="5" fill={isStateRegistered("TO") ? "black" : "red"} className="cursor-pointer">
+          <title>Tocantins (TO) - {isStateRegistered("TO") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="400" cy="200" r="5" fill={isStateRegistered("MA") ? "black" : "red"} className="cursor-pointer">
+          <title>Maranhão (MA) - {isStateRegistered("MA") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
+        <circle cx="320" cy="260" r="5" fill={isStateRegistered("DF") ? "black" : "red"} className="cursor-pointer">
+          <title>Distrito Federal (DF) - {isStateRegistered("DF") ? "Estado registrado" : "Estado não registrado"}</title>
+        </circle>
       <div className="flex-1 text-cente w-full">
 
       <div className="flex justify-end">
@@ -433,10 +536,18 @@ function isStateRegistered(abbreviation: string) {
           states.map((estado) => (
             <li
               key={estado.id}
-              className="p-2 border-b last:border-none cursor-pointer hover:bg-gray-100"
+              className="p-2 border-b last:border-none cursor-pointer hover:bg-gray-100 flex justify-between items-center"
               onClick={() => setSelectedState(estado.name)}
             >
               {estado.name} ({estado.abbreviation})
+
+              <DeleteAlertDialog 
+                onDelete={() => deleteState(estado.id)}
+                variant="ghost"
+                icon={<Trash size={18} />}
+                title="Excluir Estado"
+                description={`Tem certeza que deseja excluir o estado ${estado.name}?`}
+              />
             </li>
           ))
         ) : (
