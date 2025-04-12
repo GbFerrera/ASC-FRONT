@@ -10,6 +10,15 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+  
+  /* Sidebar collapsed/expanded visibility classes */
+  [data-state="collapsed"] .sidebar-expanded-only {
+    display: none;
+  }
+  
+  [data-state="expanded"] .sidebar-collapsed-only {
+    display: none;
+  }
 }
 
 @layer base {

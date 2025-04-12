@@ -33,7 +33,7 @@ export function SheetComponent({
     <Sheet>
       {/* Botão de abertura do Sheet */}
       <SheetTrigger asChild>
-        <Button>{triggerContent} <CirclePlus /></Button>
+        <Button className="bg-[#236F5D] hover:bg-[#1a5346] text-white">{triggerContent} <CirclePlus /></Button>
       </SheetTrigger>
 
       {/* Conteúdo do Sheet */}
@@ -50,7 +50,7 @@ export function SheetComponent({
           {footerActions}
           {onSubmit && (
             <SheetClose asChild>
-              <Button onClick={onSubmit} variant="default">
+              <Button className="bg-[#236F5D] hover:bg-[#1a5346] text-white" onClick={onSubmit} variant="default">
                 Salvar
               </Button>
             </SheetClose>
