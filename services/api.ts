@@ -1,9 +1,14 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 
-// Obtendo a URL da API a partir das variáveis de ambiente
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// Determine if we're running on Railway
+const isRailway = process.env.RAILWAY_ENVIRONMENT === 'production';
 
-if (!API_URL) {
+// Obtendo a URL da API a partir das variáveis de ambiente ou usando o domínio interno do Railway
+const API_URL = isRailway 
+  ? 'http://asc-back.railway.internal:3333' 
+  : process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_URL && !isRailway) {
   console.warn("Aviso: NEXT_PUBLIC_API_URL não está definido. Usando fallback para localhost.");
 }
 
