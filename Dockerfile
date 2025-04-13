@@ -23,4 +23,4 @@ RUN npm run build
 EXPOSE 3000
 
 # Start the application in production mode
-CMD ["npm", "start"]
+CMD ["npm", "run", "start"]
