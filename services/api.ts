@@ -1,20 +1,20 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 
-// Determine if we're running on Railway
-const isRailway = process.env.RAILWAY_ENVIRONMENT === 'production';
+// Determine if we're running in production
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Obtendo a URL da API a partir das variáveis de ambiente ou usando o domínio interno do Railway
-const API_URL = isRailway 
-  ? 'http://asc-back.railway.internal:3333' 
+// Use the production URL in production, fallback to environment variable or localhost
+const API_URL = isProduction 
+  ? 'https://api.atlascertidoes.com.br' 
   : process.env.NEXT_PUBLIC_API_URL;
 
-if (!API_URL && !isRailway) {
+if (!API_URL && !isProduction) {
   console.warn("Aviso: NEXT_PUBLIC_API_URL não está definido. Usando fallback para localhost.");
 }
 
 // Criando a instância do Axios com configurações otimizadas
 export const api: AxiosInstance = axios.create({
-  baseURL: API_URL || "http://localhost:3333",
+  baseURL: API_URL || "http://localhost:8080",
   timeout: 15000, // 15 segundos de timeout para requisições
   headers: {
     "Content-Type": "application/json",
