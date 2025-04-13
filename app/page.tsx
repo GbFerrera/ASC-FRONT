@@ -56,6 +56,9 @@ export default function Page() {
   const [certificateName, setCertificateName] = React.useState<string>("");
   const [price, setPrice] = React.useState<string>("");
   const [showStatesList, setShowStatesList] = React.useState(false);
+  const [filterState, setFilterState] = React.useState<string>("todos");
+  const [filterCategory, setFilterCategory] = React.useState<string>("todos");
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const [editCertificateName, setEditCertificateName] = React.useState<string>("");
   const [editPrice, setEditPrice] = React.useState<string>("");
@@ -254,6 +257,30 @@ export default function Page() {
 
             {showStatesList && (
               <div className="border rounded-md mt-1 p-2 max-h-[200px] overflow-y-auto">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // Select all states
+                      const allStateIds = states.map(state => state.id.toString());
+                      setSelectedStates(allStateIds);
+                    }}
+                  >
+                    Selecionar Todos
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setSelectedStates([])}
+                  >
+                    Limpar Seleção
+                  </Button>
+                </div>
+                
                 {states.map(state => (
                   <div key={state.id} className="flex items-center space-x-2 py-1">
                     <Checkbox 
@@ -295,146 +322,282 @@ export default function Page() {
       </section>
 
       <div className="mt-6">
-        {states.map((state) => {
-          const stateCertificates = certificates.filter(cert => cert.state_id === state.id);
-          
-          // If no certificates for this state, don't render the section
-          if (stateCertificates.length === 0) return null;
-          
-          // Group certificates by category
-          const certificatesByCategory: Record<number, Certificate[]> = {};
-          
-          // Initialize categories with empty arrays
-          categories.forEach((category: Category) => {
-            certificatesByCategory[category.id] = [];
-          });
-          
-          // Group certificates into their categories
-          stateCertificates.forEach((cert: Certificate) => {
-            if (cert.category_id) {
-              if (!certificatesByCategory[cert.category_id]) {
-                certificatesByCategory[cert.category_id] = [];
-              }
-              certificatesByCategory[cert.category_id].push(cert);
-            }
-          });
-          
-          return (
-            <div key={state.id} className="mb-10">
-              <h2 className="text-2xl font-semibold mb-6 pb-2 border-b">{state.name} ({state.abbreviation})</h2>
-              
-              {/* Render each category that has certificates */}
-              {Object.entries(certificatesByCategory).map(([categoryId, certs]: [string, Certificate[]]) => {
-                // Skip empty categories
-                if (certs.length === 0) return null;
-                
-                const category = categories.find(cat => cat.id === parseInt(categoryId));
-                if (!category) return null;
-                
-                return (
-                  <div key={categoryId} className="mb-8">
-                    <h3 className="text-xl font-medium mb-4 text-[#236F5D]">{category.name}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {certs.map(cert => (
-                        <Card key={cert.id} className="border border-gray-200 hover:shadow-md transition-all duration-200">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="flex justify-between items-start">
-                              <div className="flex flex-col space-y-1">
-                                <h3 className="text-lg font-medium">{cert.name}</h3>
-                              </div>
-                              
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="outline" size="sm" className="text-red-500 border-gray-200 hover:border-red-200">
-                                    <Trash className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Tem certeza que deseja excluir a certidão ({cert.name})?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Pense bem antes de agir! Essa ação é permanente e não
-                                      poderá ser desfeita.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteCertificate(cert.id)} className="bg-red-500 hover:bg-red-600 text-white">
-                                      Confirmar
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="flex items-center justify-between mb-4">
-                              <p className="text-gray-700 font-medium">Preço: R$ {cert.price.toFixed(2).replace('.', ',')}</p>
-                            </div>
-                          </CardContent>
-                          <CardFooter>
-                            <SheetComponent
-                              title={`${cert.name}`}
-                              description={`Edite a certidão ${cert.name}`}
-                              triggerContent={
-                                <>
-                                  Editar
-                                </>
-                              }
-                              onSubmit={() => handleEditCertificate(cert)}
-                            >
-                              <InputWithLabel
-                                label="Nome da certidão"
-                                placeholder="Ex: Certidão de Nascimento"
-                                value={editCertificateName}
-                                onChange={(e) => setEditCertificateName(e.target.value)}
-                                defaultValue={cert.name}
-                              />
-
-                              <SelectComponent
-                                options={states.map((state) => ({
-                                  value: state.id.toString(),
-                                  label: state.name,
-                                }))}
-                                placeholder="Selecione um estado"
-                                label="Estados"
-                                triggerWidth="full"
-                                onValueChange={setEditSelectedState}
-                                value={editSelectedState || cert.state_id.toString()}
-                              />
-
-                              <SelectComponent
-                                options={categories.map((category) => ({
-                                  value: category.id.toString(),
-                                  label: category.name,
-                                }))}
-                                placeholder="Selecione uma categoria"
-                                label="Categorias"
-                                triggerWidth="full"
-                                onValueChange={setEditSelectedCategory}
-                                value={editSelectedCategory || (cert.category_id ? cert.category_id.toString() : '')}
-                              />
-
-                              <InputWithLabel
-                                label="Digite o valor dessa certidão"
-                                placeholder="Ex: 129,90"
-                                value={editPrice}
-                                onChange={(e) => setEditPrice(e.target.value)}
-                                defaultValue={cert.price.toString().replace('.', ',')}
-                              />
-                            </SheetComponent>
-                          </CardFooter>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6 border border-gray-100">
+          <h3 className="text-lg font-medium text-[#236F5D] mb-3">Filtrar Certidões</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <SelectComponent
+                options={[
+                  { value: "todos", label: "Todos os estados" },
+                  ...states.map((state) => ({
+                    value: state.id.toString(),
+                    label: `${state.name} (${state.abbreviation})`,
+                  })),
+                ]}
+                placeholder="Selecione um estado"
+                label="Estado"
+                triggerWidth="full"
+                onValueChange={setFilterState}
+                value={filterState}
+              />
             </div>
-          );
-        })}
+            
+            <div className="space-y-2">
+              <SelectComponent
+                options={[
+                  { value: "todos", label: "Todas as categorias" },
+                  ...categories.map((category) => ({
+                    value: category.id.toString(),
+                    label: category.name,
+                  })),
+                ]}
+                placeholder="Selecione uma categoria"
+                label="Categoria"
+                triggerWidth="full"
+                onValueChange={setFilterCategory}
+                value={filterCategory}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <InputWithLabel
+                label="Pesquisar certidões"
+                placeholder="Ex: Casamento, Nascimento..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                icon={
+                  searchQuery ? 
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </Button> 
+                    : 
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                }
+              />
+            </div>
+          </div>
+          
+          {(filterState !== "todos" || filterCategory !== "todos" || searchQuery) && (
+            <div className="flex items-center mt-4 pt-3 border-t border-gray-100">
+              <div className="flex flex-wrap gap-2">
+                {filterState !== "todos" && (
+                  <div className="flex items-center bg-[#E8F5F1] text-[#236F5D] px-3 py-1 rounded-full text-sm">
+                    <span>Estado: {states.find(s => s.id.toString() === filterState)?.name}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-5 w-5 p-0 ml-1 text-[#236F5D]"
+                      onClick={() => setFilterState("todos")}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </Button>
+                  </div>
+                )}
+                
+                {filterCategory !== "todos" && (
+                  <div className="flex items-center bg-[#E8F5F1] text-[#236F5D] px-3 py-1 rounded-full text-sm">
+                    <span>Categoria: {categories.find(c => c.id.toString() === filterCategory)?.name}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-5 w-5 p-0 ml-1 text-[#236F5D]"
+                      onClick={() => setFilterCategory("todos")}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </Button>
+                  </div>
+                )}
+                
+                {searchQuery && (
+                  <div className="flex items-center bg-[#E8F5F1] text-[#236F5D] px-3 py-1 rounded-full text-sm">
+                    <span>Pesquisa: {searchQuery}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-5 w-5 p-0 ml-1 text-[#236F5D]"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </Button>
+                  </div>
+                )}
+                
+                {(filterState !== "todos" || filterCategory !== "todos" || searchQuery) && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-sm h-7 border-gray-200 text-gray-600"
+                    onClick={() => {
+                      setFilterState("todos");
+                      setFilterCategory("todos");
+                      setSearchQuery("");
+                    }}
+                  >
+                    Limpar todos
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {states
+          .filter(state => filterState === "todos" || state.id.toString() === filterState)
+          .map((state) => {
+            const stateCertificates = certificates.filter(cert => cert.state_id === state.id);
+            
+            // Apply category and search filters
+            const filteredCertificates = stateCertificates.filter(cert => {
+              const matchesCategory = filterCategory === "todos" || cert.category_id?.toString() === filterCategory;
+              const matchesSearch = searchQuery === "" || 
+                cert.name.toLowerCase().includes(searchQuery.toLowerCase());
+              return matchesCategory && matchesSearch;
+            });
+            
+            // If no certificates for this state after filtering, don't render the section
+            if (filteredCertificates.length === 0) return null;
+            
+            // Group certificates by category
+            const certificatesByCategory: Record<number, Certificate[]> = {};
+            
+            // Initialize categories with empty arrays
+            categories.forEach((category: Category) => {
+              certificatesByCategory[category.id] = [];
+            });
+            
+            // Group certificates into their categories
+            filteredCertificates.forEach((cert: Certificate) => {
+              if (cert.category_id) {
+                if (!certificatesByCategory[cert.category_id]) {
+                  certificatesByCategory[cert.category_id] = [];
+                }
+                certificatesByCategory[cert.category_id].push(cert);
+              }
+            });
+            
+            return (
+              <div key={state.id} className="mb-10">
+                <h2 className="text-2xl font-semibold mb-6 pb-2 border-b">{state.name} ({state.abbreviation})</h2>
+                
+                {/* Render each category that has certificates */}
+                {Object.entries(certificatesByCategory)
+                  .filter(([categoryId, certs]) => certs.length > 0)
+                  .map(([categoryId, certs]: [string, Certificate[]]) => {
+                    const category = categories.find(cat => cat.id === parseInt(categoryId));
+                    if (!category) return null;
+                    
+                    return (
+                      <div key={categoryId} className="mb-8">
+                        <h3 className="text-xl font-medium mb-4 text-[#236F5D]">{category.name}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {certs.map(cert => (
+                            <Card key={cert.id} className="border border-gray-200 hover:shadow-md transition-all duration-200">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="flex justify-between items-start">
+                                  <div className="flex flex-col space-y-1">
+                                    <h3 className="text-lg font-medium">{cert.name}</h3>
+                                    <span className="text-xs text-gray-500">
+                                      {state.name} ({state.abbreviation})
+                                    </span>
+                                  </div>
+                                  
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="outline" size="sm" className="text-red-500 border-gray-200 hover:border-red-200">
+                                        <Trash className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Tem certeza que deseja excluir a certidão ({cert.name})?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Pense bem antes de agir! Essa ação é permanente e não
+                                          poderá ser desfeita.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteCertificate(cert.id)} className="bg-red-500 hover:bg-red-600 text-white">
+                                          Confirmar
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="flex items-center justify-between mb-4">
+                                  <p className="text-gray-700 font-medium">Preço: R$ {(Number(cert.price) || 0).toFixed(2).replace('.', ',')}</p>
+                                </div>
+                              </CardContent>
+                              <CardFooter>
+                                <SheetComponent
+                                  title={`${cert.name}`}
+                                  description={`Edite a certidão ${cert.name}`}
+                                  triggerContent={
+                                    <>
+                                      Editar
+                                    </>
+                                  }
+                                  onSubmit={() => handleEditCertificate(cert)}
+                                >
+                                  <InputWithLabel
+                                    label="Nome da certidão"
+                                    placeholder="Ex: Certidão de Nascimento"
+                                    value={editCertificateName}
+                                    onChange={(e) => setEditCertificateName(e.target.value)}
+                                    defaultValue={cert.name}
+                                  />
+
+                                  <SelectComponent
+                                    options={states.map((state) => ({
+                                      value: state.id.toString(),
+                                      label: state.name,
+                                    }))}
+                                    placeholder="Selecione um estado"
+                                    label="Estados"
+                                    triggerWidth="full"
+                                    onValueChange={setEditSelectedState}
+                                    value={editSelectedState || cert.state_id.toString()}
+                                  />
+
+                                  <SelectComponent
+                                    options={categories.map((category) => ({
+                                      value: category.id.toString(),
+                                      label: category.name,
+                                    }))}
+                                    placeholder="Selecione uma categoria"
+                                    label="Categorias"
+                                    triggerWidth="full"
+                                    onValueChange={setEditSelectedCategory}
+                                    value={editSelectedCategory || (cert.category_id ? cert.category_id.toString() : '')}
+                                  />
+
+                                  <InputWithLabel
+                                    label="Digite o valor dessa certidão"
+                                    placeholder="Ex: 129,90"
+                                    value={editPrice}
+                                    onChange={(e) => setEditPrice(e.target.value)}
+                                    defaultValue={cert.price.toString().replace('.', ',')}
+                                  />
+                                </SheetComponent>
+                              </CardFooter>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
   );
 }

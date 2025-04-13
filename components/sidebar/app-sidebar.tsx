@@ -122,39 +122,54 @@ const data = {
       ],
     }
   ],
-
 }
 
-
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { isMobile } = useSidebar();
+  
   return (
     <Sidebar collapsible="icon" className="shadow-sm" {...props}>
       <SidebarHeader className="bg-[#236F5D]">
         <div className="flex items-center justify-center px-4 py-4">
-          {/* Este ícone sempre aparece quando a sidebar está fechada */}
-          <div className="absolute left-0 right-0 mx-auto w-10 sidebar-collapsed-only">
-            <Image
-              src="/icon.svg"
-              alt="Atlas Certidões"
-              width={30}
-              height={30}
-              priority
-              className="object-contain mx-auto"
-            />
-          </div>
-          
-          {/* Este logo aparece quando a sidebar está aberta */}
-          <div className="w-28 sidebar-expanded-only">
-            <Image
-              src="/atlas-logo.svg"
-              alt="Atlas Certidões"
-              width={160}
-              height={70}
-              priority
-              className="object-contain"
-            />
-          </div>
+          {/* Mostrar apenas o logo completo no mobile */}
+          {isMobile ? (
+            <div className="w-28">
+              <Image
+                src="/atlas-logo.svg"
+                alt="Atlas Certidões"
+                width={160}
+                height={70}
+                priority
+                className="object-contain"
+              />
+            </div>
+          ) : (
+            <>
+              {/* Este ícone sempre aparece quando a sidebar está fechada no desktop */}
+              <div className="absolute left-0 right-0 mx-auto w-10 sidebar-collapsed-only">
+                <Image
+                  src="/icon.svg"
+                  alt="Atlas Certidões"
+                  width={30}
+                  height={30}
+                  priority
+                  className="object-contain mx-auto"
+                />
+              </div>
+              
+              {/* Este logo aparece quando a sidebar está aberta no desktop */}
+              <div className="w-28 sidebar-expanded-only">
+                <Image
+                  src="/atlas-logo.svg"
+                  alt="Atlas Certidões"
+                  width={160}
+                  height={70}
+                  priority
+                  className="object-contain"
+                />
+              </div>
+            </>
+          )}
         </div>
       </SidebarHeader>
       

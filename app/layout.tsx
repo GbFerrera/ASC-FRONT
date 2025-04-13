@@ -64,7 +64,7 @@ export default function RootLayout({
                   <Breadcrumb>
                     <BreadcrumbList>
                       <BreadcrumbItem className="hidden md:block">
-                        <BreadcrumbLink href="/certificate">
+                        <BreadcrumbLink href="/">
                         ATLAS
                         </BreadcrumbLink>
                       </BreadcrumbItem>

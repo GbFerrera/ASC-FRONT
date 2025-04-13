@@ -8,10 +8,11 @@ export interface InputWithLabelProps
   labelClassName?: string; // Classes adicionais para estilizar a label
   inputClassName?: string; // Classes adicionais para estilizar o input
   id?: string; // ID do input para conectar com a label
+  icon?: React.ReactNode; // Ícone para exibir no input
 }
 
 export const InputWithLabel = React.forwardRef<HTMLInputElement, InputWithLabelProps>(
-  ({ label, labelClassName, inputClassName, id, ...props }, ref) => {
+  ({ label, labelClassName, inputClassName, id, icon, ...props }, ref) => {
     return (
       <div className="flex flex-col gap-1 w-full mb-2">
         <Label
@@ -20,15 +21,23 @@ export const InputWithLabel = React.forwardRef<HTMLInputElement, InputWithLabelP
         >
           {label}
         </Label>
-        <input
-          id={id}
-          ref={ref}
-          className={cn(
-            "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-            inputClassName
+        <div className="relative">
+          <input
+            id={id}
+            ref={ref}
+            className={cn(
+              "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+              icon && "pr-10",
+              inputClassName
+            )}
+            {...props}
+          />
+          {icon && (
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+              {icon}
+            </div>
           )}
-          {...props}
-        />
+        </div>
       </div>
     );
   }
