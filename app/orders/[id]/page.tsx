@@ -213,7 +213,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             </svg>
             <span className="text-lg">Carregando detalhes do pedido...</span>
           </div>
-        </div>
+        </div>          
       </div>          
     )
   }
@@ -395,121 +395,154 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                 {order.items && order.items.length > 0 ? (
                   order.items.map((item) => (
                     <tr key={item.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{item.certificate_name}</div>
-                      <div className="text-sm text-gray-500">ID: {item.certificate_id}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(item.price)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(item.price * item.quantity)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center justify-between" role="group" aria-label="Status do item e opções de atualização">
-                        <div className="flex items-center">
-                          <span 
-                            className={`inline-flex px-3 py-1.5 text-sm font-semibold rounded-full ${getStatusClass(item.status as OrderStatus)}`}
-                            role="status"
-                            aria-label={`Status atual: ${translateStatus(item.status as OrderStatus)}`}
-                          >
-                            {translateStatus(item.status as OrderStatus)}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-3">
-
-                          
-                          {/* Botão de ação com menu de status */}
-                          <div className="relative inline-block">
-                            <button
-                              onClick={() => setOpenItemDropdown(openItemDropdown === item.id ? null : item.id)}
-                              disabled={updatingItemId === item.id}
-                              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-[#236F5D] bg-white border border-gray-300 rounded-md hover:bg-gray-50 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#236F5D] focus:ring-offset-2"
-                              aria-haspopup="true"
-                              aria-expanded={openItemDropdown === item.id}
-                              aria-label="Alterar status do item"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                              </svg>
-                              Alterar Status
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </button>
-                            
-                            {openItemDropdown === item.id && (
-                              <div className="absolute right-0 mt-1 w-56 bg-white rounded-md shadow-lg z-20 border border-gray-200 overflow-hidden" role="menu">
-                                <div className="py-1">
-                                  {item.status !== 'pending' && (
-                                    <button
-                                      onClick={() => handleUpdateItemStatus(item.id, 'pending')}
-                                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700"
-                                      role="menuitem"
-                                    >
-                                      <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-3"></span>
-                                      Pendente
-                                    </button>
-                                  )}
-                                  
-                                  {item.status !== 'processing' && (
-                                    <button
-                                      onClick={() => handleUpdateItemStatus(item.id, 'processing')}
-                                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                                      role="menuitem"
-                                    >
-                                      <span className="inline-block w-3 h-3 rounded-full bg-blue-500 mr-3"></span>
-                                      Em Processamento
-                                    </button>
-                                  )}
-                                  
-                                  {item.status !== 'completed' && (
-                                    <button
-                                      onClick={() => handleUpdateItemStatus(item.id, 'completed')}
-                                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700"
-                                      role="menuitem"
-                                    >
-                                      <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-3"></span>
-                                      Concluído
-                                    </button>
-                                  )}
-                                  
-                                  {item.status !== 'cancelled' && (
-                                    <button
-                                      onClick={() => handleUpdateItemStatus(item.id, 'cancelled')}
-                                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700"
-                                      role="menuitem"
-                                    >
-                                      <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-3"></span>
-                                      Cancelado
-                                    </button>
-                                  )}
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-gray-900">{item.certificate_name}</div>
+                        {item.certificate_data && (
+                          <div className="mt-2 border-l-2 border-[#236F5D] pl-3">
+                            <div className="text-xs text-gray-600">
+                              {item.certificate_data.document_type && (
+                                <div className="mb-1">
+                                  <span className="text-gray-500">Tipo:</span> {item.certificate_data.document_type}
                                 </div>
-                              </div>
-                            )}
-                            
-                            {/* Overlay para fechar o menu ao clicar fora */}
-                            {openItemDropdown === item.id && (
-                              <div 
-                                className="fixed inset-0 z-10" 
-                                onClick={() => setOpenItemDropdown(null)}
-                                aria-hidden="true"
-                              />
-                            )}
+                              )}
+                              {item.certificate_data.cartorio && (
+                                <div className="mb-1">
+                                  <span className="text-gray-500">Cartório:</span> {item.certificate_data.cartorio}
+                                </div>
+                              )}
+                              {(item.certificate_data.city || item.certificate_data.state) && (
+                                <div className="mb-1">
+                                  <span className="text-gray-500">Local:</span> {item.certificate_data.city}
+                                  {item.certificate_data.city && item.certificate_data.state ? ' - ' : ''}
+                                  {item.certificate_data.state}
+                                </div>
+                              )}
+                              {item.certificate_data.registry_date && (
+                                <div className="mb-1">
+                                  <span className="text-gray-500">Data:</span> {item.certificate_data.registry_date}
+                                </div>
+                              )}
+                              {(item.certificate_data.registry_book || item.certificate_data.registry_page) && (
+                                <div className="mb-1">
+                                  <span className="text-gray-500">Livro/Folha:</span> {item.certificate_data.registry_book}
+                                  {item.certificate_data.registry_book && item.certificate_data.registry_page ? '/' : ''}
+                                  {item.certificate_data.registry_page}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(item.price)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(item.price * item.quantity)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center justify-between" role="group" aria-label="Status do item e opções de atualização">
+                          <div className="flex items-center">
+                            <span 
+                              className={`inline-flex px-3 py-1.5 text-sm font-semibold rounded-full ${getStatusClass(item.status as OrderStatus)}`}
+                              role="status"
+                              aria-label={`Status atual: ${translateStatus(item.status as OrderStatus)}`}
+                            >
+                              {translateStatus(item.status as OrderStatus)}
+                            </span>
                           </div>
                           
-                          {/* Indicador de carregamento */}
-                          {updatingItemId === item.id && (
-                            <div className="flex items-center justify-center" role="status" aria-live="polite">
-                              <svg className="animate-spin h-5 w-5 text-[#236F5D]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              <span className="sr-only">Atualizando status...</span>
+                          <div className="flex items-center space-x-3">
+
+                            {/* Botão de ação com menu de status */}
+                            <div className="relative inline-block">
+                              <button
+                                onClick={() => setOpenItemDropdown(openItemDropdown === item.id ? null : item.id)}
+                                disabled={updatingItemId === item.id}
+                                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-[#236F5D] bg-white border border-gray-300 rounded-md hover:bg-gray-50 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#236F5D] focus:ring-offset-2"
+                                aria-haspopup="true"
+                                aria-expanded={openItemDropdown === item.id}
+                                aria-label="Alterar status do item"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Alterar Status
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </button>
+                              
+                              {openItemDropdown === item.id && (
+                                <div className="absolute right-0 mt-1 w-56 bg-white rounded-md shadow-lg z-20 border border-gray-200 overflow-hidden" role="menu">
+                                  <div className="py-1">
+                                    {item.status !== 'pending' && (
+                                      <button
+                                        onClick={() => handleUpdateItemStatus(item.id, 'pending')}
+                                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700"
+                                        role="menuitem"
+                                      >
+                                        <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-3"></span>
+                                        Pendente
+                                      </button>
+                                    )}
+                                    
+                                    {item.status !== 'processing' && (
+                                      <button
+                                        onClick={() => handleUpdateItemStatus(item.id, 'processing')}
+                                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                                        role="menuitem"
+                                      >
+                                        <span className="inline-block w-3 h-3 rounded-full bg-blue-500 mr-3"></span>
+                                        Em Processamento
+                                      </button>
+                                    )}
+                                    
+                                    {item.status !== 'completed' && (
+                                      <button
+                                        onClick={() => handleUpdateItemStatus(item.id, 'completed')}
+                                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700"
+                                        role="menuitem"
+                                      >
+                                        <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-3"></span>
+                                        Concluído
+                                      </button>
+                                    )}
+                                    
+                                    {item.status !== 'cancelled' && (
+                                      <button
+                                        onClick={() => handleUpdateItemStatus(item.id, 'cancelled')}
+                                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700"
+                                        role="menuitem"
+                                      >
+                                        <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-3"></span>
+                                        Cancelado
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Overlay para fechar o menu ao clicar fora */}
+                              {openItemDropdown === item.id && (
+                                <div 
+                                  className="fixed inset-0 z-10" 
+                                  onClick={() => setOpenItemDropdown(null)}
+                                  aria-hidden="true"
+                                />
+                              )}
                             </div>
-                          )}
+                            
+                            {/* Indicador de carregamento */}
+                            {updatingItemId === item.id && (
+                              <div className="flex items-center justify-center" role="status" aria-live="polite">
+                                <svg className="animate-spin h-5 w-5 text-[#236F5D]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span className="sr-only">Atualizando status...</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
                   ))
                 ) : (
                   <tr>
